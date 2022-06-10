@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.5;
+import "hardhat/console.sol";
 
 contract MultiSig {
     address[] public owners;
     uint public transactionCount;
     uint public required;
+    uint public expired;
 
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -16,6 +18,7 @@ contract MultiSig {
         uint value;
         bool executed;
         bytes data;
+        uint timestamp;
     }
 
     mapping(uint => Transaction) public transactions;
@@ -56,15 +59,23 @@ contract MultiSig {
 
     function executeTransaction(uint transactionId) public {
         require(isConfirmed(transactionId));
+        require(isExpired(transactionId) == false);
         emit Execution(transactionId);
         Transaction storage _tx = transactions[transactionId];
-        (bool success, ) = _tx.destination.call{ value: _tx.value }(_tx.data);
+        console.logBytes(_tx.data);
+        (bool success, bytes memory returnData) = payable(_tx.destination).call{ value: _tx.value }(_tx.data);
+        console.logBytes(returnData);
         require(success, "Failed to execute transaction");
         _tx.executed = true;
     }
 
     function isConfirmed(uint transactionId) public view returns(bool) {
         return getConfirmationsCount(transactionId) >= required;
+    }
+
+    function isExpired(uint transactionId) public view returns(bool) {
+        Transaction storage _tx = transactions[transactionId];
+        return _tx.timestamp +  30 days <= block.timestamp;
     }
 
     function getConfirmationsCount(uint transactionId) public view returns(uint) {
@@ -114,16 +125,17 @@ contract MultiSig {
     }
 
     function addTransaction(address payable destination, uint value, bytes memory data) public returns(uint) {
-        transactions[transactionCount] = Transaction(destination, value, false, data);
+        transactions[transactionCount] = Transaction(destination, value, false, data, block.timestamp);
         transactionCount += 1;
         return transactionCount - 1;
     }
 
-    constructor(address[] memory _owners, uint _confirmations) {
+    constructor(address[] memory _owners, uint _confirmations, uint _expired) {
         require(_owners.length > 0);
         require(_confirmations > 0);
         require(_confirmations <= _owners.length);
         owners = _owners;
         required = _confirmations;
+        expired = _expired;
     }
 }

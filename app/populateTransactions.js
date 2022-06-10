@@ -9,7 +9,7 @@ export default async function populateTransactions() {
   const code = await provider.getCode(address);
   const transactions = [];
   if(code !== "0x") {
-    const transactionIds = await contract.getTransactionIds(true, true);
+    const transactionIds = await contract.getTransactionIds(true, false);
     for(let i = 0; i < transactionIds.length; i++) {
       const id = transactionIds[i];
       const attributes = await contract.transactions(id);

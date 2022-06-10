@@ -14,7 +14,7 @@ async function newTransaction() {
   const contract = new ethers.Contract(address, MultiSig.abi, signer);
   const destination = document.getElementById("destination").value;
   const wei = document.getElementById("wei").value;
-  await contract.submitTransaction(destination, wei, "0x");
+  await contract.submitTransaction(destination, wei, "0x9293");
 }
 
 document.getElementById("deploy").addEventListener("click", newTransaction);

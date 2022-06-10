@@ -4,7 +4,7 @@ const fs = require('fs');
 async function main() {
   const accounts = await ethers.provider.listAccounts();
   const MultiSig = await ethers.getContractFactory("MultiSig");
-  const multiSig = await MultiSig.deploy(accounts, 2);
+  const multiSig = await MultiSig.deploy(accounts, 2, 30);
 
   await multiSig.deployed();
 
